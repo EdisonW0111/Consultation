@@ -1,5 +1,5 @@
 
-package Class;
+package Class; //Entity
 
 
 public class Consultation {
