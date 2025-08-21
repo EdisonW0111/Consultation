@@ -1,6 +1,8 @@
 package Entity; 
 
-public class Consultation {
+import java.util.Objects;
+
+public class Consultation implements Comparable<Consultation>{
 
     private String patientName;
     private String doctorName;
