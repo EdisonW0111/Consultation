@@ -1,7 +1,7 @@
 
 package Node;
 
-import Class.Consultation;
+import Entity.Consultation;
 
 
 public class Node {

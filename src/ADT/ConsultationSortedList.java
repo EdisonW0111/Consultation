@@ -1,55 +1,82 @@
 package ADT;
 
-import Class.Consultation;
+import Entity.Consultation;
 import Node.Node;
 
-public class ConsultationSortedList implements SortedListInterface {
+public class ConsultationSortedList implements SortedListInterface<Consultation> {
 
-    private Node head;
+    private Node<Consultation> head;
 
     public ConsultationSortedList() {
         head = null;
     }
 
     // Add in sorted order
-    public void add(String patientName, String doctorName, String date, String time) {
-        Consultation c = new Consultation(patientName, doctorName, date, time);
-
-        if (isBooked(date, time, doctorName)) {
-            System.out.println("Doctor " + doctorName + " is unavailable for " + date + " " + time);
-            return;
+    @Override
+    public boolean add(Consultation newEntry) {
+        if (contains(newEntry)) {
+            System.out.println("Doctor " + newEntry.getDoctorName() +
+                    " is unavailable for " + newEntry.getDate() + " " + newEntry.getTime());
+            return false;
         }
 
-        Node newNode = new Node(c);
+        Node<Consultation> newNode = new Node<>(newEntry);
 
-        if (head == null || c.compareTo(head.getData()) < 0) {
+        if (head == null || newEntry.compareTo(head.getData()) < 0) {
             newNode.setNext(head);
             head = newNode;
-            return;
+            return true;
         }
 
-        Node current = head;
-        while (current.getNext() != null && c.compareTo(current.getNext().getData()) > 0) {
+        Node<Consultation> current = head;
+        while (current.getNext() != null &&
+                newEntry.compareTo(current.getNext().getData()) > 0) {
             current = current.getNext();
         }
 
         newNode.setNext(current.getNext());
         current.setNext(newNode);
+        return true;
     }
 
-    // Check if slot is booked
-    public boolean isBooked(String date, String time, String doctorName) {
-        Node current = head;
+    // Cancel by matching consultation
+    @Override
+    public boolean cancel(Consultation targetEntry) {
+        if (head == null) {
+            return false; // list empty
+        }
+
+        // If the head is the one to remove
+        if (head.getData().sameSlot(targetEntry.getDate(), targetEntry.getTime())
+                && head.getData().getDoctorName().equalsIgnoreCase(targetEntry.getDoctorName())) {
+            head = head.getNext();
+            return true;
+        }
+
+        Node<Consultation> current = head;
+        while (current.getNext() != null) {
+            Consultation nextData = current.getNext().getData();
+            if (nextData.sameSlot(targetEntry.getDate(), targetEntry.getTime())
+                    && nextData.getDoctorName().equalsIgnoreCase(targetEntry.getDoctorName())) {
+                current.setNext(current.getNext().getNext());
+                return true;
+            }
+            current = current.getNext();
+        }
+        return false; // not found
+    }
+
+    // Check if slot is booked (with 30 min rule)
+    @Override
+    public boolean contains(Consultation targetEntry) {
+        Node<Consultation> current = head;
         while (current != null) {
             Consultation existing = current.getData();
-
-            if (existing.getDoctorName().equalsIgnoreCase(doctorName)
-                    && existing.getDate().equals(date)) {
-
+            if (existing.getDoctorName().equalsIgnoreCase(targetEntry.getDoctorName())
+                    && existing.getDate().equals(targetEntry.getDate())) {
                 // Convert times to minutes
                 int bookedMinutes = toMinutes(existing.getTime());
-                int newMinutes = toMinutes(time);
-
+                int newMinutes = toMinutes(targetEntry.getTime());
                 if (Math.abs(bookedMinutes - newMinutes) < 30) {
                     return true; // conflict within 30 minutes
                 }
@@ -67,39 +94,15 @@ public class ConsultationSortedList implements SortedListInterface {
         return hours * 60 + minutes;
     }
 
-    // Cancel a booking by date, time and doctor name
-    public boolean cancel(String date, String time, String doctorName) {
-        if (head == null) {
-            return false; // list empty
-        }
-
-        // If the head is the one to remove
-        if (head.getData().sameSlot(date, time)
-                && head.getData().getDoctorName().equalsIgnoreCase(doctorName)) {
-            head = head.getNext();
-            return true;
-        }
-
-        Node current = head;
-        while (current.getNext() != null) {
-            if (current.getNext().getData().sameSlot(date, time)
-                    && current.getNext().getData().getDoctorName().equalsIgnoreCase(doctorName)) {
-                current.setNext(current.getNext().getNext());
-                return true;
-            }
-            current = current.getNext();
-        }
-
-        return false; // not found
-    }
-
+    @Override
     public boolean isEmpty() {
         return head == null;
     }
 
+    @Override
     public int size() {
         int count = 0;
-        Node current = head;
+        Node<Consultation> current = head;
         while (current != null) {
             count++;
             current = current.getNext();
@@ -108,8 +111,9 @@ public class ConsultationSortedList implements SortedListInterface {
     }
 
     // Display list
+    @Override
     public void display() {
-        Node current = head;
+        Node<Consultation> current = head;
         while (current != null) {
             Consultation c = current.getData();
             System.out.println(c.getDate() + " " + c.getTime()
