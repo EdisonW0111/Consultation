@@ -43,10 +43,9 @@ public class ConsultationSortedList implements SortedListInterface<Consultation>
     @Override
     public boolean cancel(Consultation targetEntry) {
         if (head == null) {
-            return false; // list empty
+            return false;
         }
 
-        // If head matches by ID
         if (head.getData().getConsultationID() == targetEntry.getConsultationID()) {
             head = head.getNext();
             return true;
@@ -60,7 +59,6 @@ public class ConsultationSortedList implements SortedListInterface<Consultation>
             }
             current = current.getNext();
         }
-
         return false; // not found
     }
 
@@ -108,17 +106,50 @@ public class ConsultationSortedList implements SortedListInterface<Consultation>
         return count;
     }
 
+    public boolean updateStatus(int consultationID, Consultation.Status newStatus) {
+        Node<Consultation> current = head;
+        while (current != null) {
+            if (current.getData().getConsultationID() == consultationID) {
+                current.getData().setStatus(newStatus);
+                return true;
+            }
+            current = current.getNext();
+        }
+        return false; // not found
+    }
+
     // Display list
     @Override
     public void display() {
         Node<Consultation> current = head;
         while (current != null) {
             Consultation c = current.getData();
-            System.out.println(c.getDate() + " " + c.getTime()
+            System.out.println(c.getConsultationID() + " " + c.getDate() + " " + c.getTime()
                     + " - " + c.getPatientName()
-                    + " with Dr. " + c.getDoctorName());
+                    + " with Dr. " + c.getDoctorName() + " " + c.getStatus());
             current = current.getNext();
         }
     }
+    
+    @Override
+    public void listScheduledConsultations() {
+        Node<Consultation> current = head;
+        boolean found = false;
 
+        while (current != null) {
+            Consultation c = current.getData();
+            if (c.getStatus() == Consultation.Status.SCHEDULED) {
+                System.out.println(c.getConsultationID() + " " + c.getDate() + " " + c.getTime()
+                        + " - " + c.getPatientName()
+                        + " with Dr. " + c.getDoctorName()
+                        + " [Status: " + c.getStatus() + "]");
+                found = true;
+            }
+            current = current.getNext();
+        }
+
+        if (!found) {
+            System.out.println("No scheduled consultations found.");
+        }
+    }
 }

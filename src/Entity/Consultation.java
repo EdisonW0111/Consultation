@@ -13,6 +13,12 @@ public class Consultation implements Comparable<Consultation> {
     private String doctorName;
     private String date; // Format: YYYY-MM-DD
     private String time; // Format: HH:MM (24-hour)
+    private Status status;
+    
+    // Enum for consultation status
+    public enum Status {
+        SCHEDULED, CHECKED_IN, COMPLETED, CANCELLED
+    }
 
     public Consultation(String patientName, String doctorName, String date, String time) {
         this.consultationID = COUNTER.getAndIncrement(); // assign unique ID
@@ -20,6 +26,7 @@ public class Consultation implements Comparable<Consultation> {
         this.doctorName = doctorName;
         this.date = date;
         this.time = time;
+        this.status = Status.SCHEDULED;
     }
 
     // Getters
@@ -41,6 +48,15 @@ public class Consultation implements Comparable<Consultation> {
 
     public String getTime() {
         return time;
+    }
+    
+    public Status getStatus() {
+        return status;
+    }
+    
+    // Update status
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     // Compare two consultations by date, then time
@@ -67,12 +83,10 @@ public class Consultation implements Comparable<Consultation> {
     public int hashCode() {
         return Objects.hash(consultationID);
     }
-
-    // For easy display
+    
     @Override
     public String toString() {
-        return "[" + consultationID + "] "
-                + date + " " + time + " - "
-                + patientName + " with Dr. " + doctorName;
+        return String.format("[%s] %s with Dr.%s on %s %s (%s)", 
+            consultationID, patientName, doctorName, date, time, status);
     }
 }

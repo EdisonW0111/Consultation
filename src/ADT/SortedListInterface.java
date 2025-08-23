@@ -56,4 +56,9 @@ public interface SortedListInterface<T extends Comparable<T>> {
      * @return true if the list contains no entries, or false otherwise
      */
     public boolean isEmpty();
+    
+    
+    public void listScheduledConsultations();
+
+    
 }
