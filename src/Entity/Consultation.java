@@ -1,15 +1,21 @@
-package Entity; 
+package Entity;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class Consultation implements Comparable<Consultation>{
+public class Consultation implements Comparable<Consultation> {
 
+    private static final AtomicInteger COUNTER = new AtomicInteger(1000); 
+    // Auto-increment ID starting from 1000
+
+    private final int consultationID;
     private String patientName;
     private String doctorName;
     private String date; // Format: YYYY-MM-DD
     private String time; // Format: HH:MM (24-hour)
 
     public Consultation(String patientName, String doctorName, String date, String time) {
+        this.consultationID = COUNTER.getAndIncrement(); // assign unique ID
         this.patientName = patientName;
         this.doctorName = doctorName;
         this.date = date;
@@ -17,6 +23,10 @@ public class Consultation implements Comparable<Consultation>{
     }
 
     // Getters
+    public int getConsultationID() {
+        return consultationID;
+    }
+
     public String getPatientName() {
         return patientName;
     }
@@ -43,34 +53,26 @@ public class Consultation implements Comparable<Consultation>{
         return this.time.compareTo(other.time); // same date → compare time
     }
 
-    // Check if date, time and doctor match
-    public boolean sameSlot(String date, String time, String doctorName) {
-        return this.date.equals(date)
-                && this.time.equals(time)
-                && this.doctorName.equalsIgnoreCase(doctorName);
-    }
-
-    // Override equals to compare consultations
+    // Override equals to compare by ID
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
         if (!(obj instanceof Consultation)) return false;
         Consultation other = (Consultation) obj;
-        return Objects.equals(patientName, other.patientName)
-                && Objects.equals(doctorName, other.doctorName)
-                && Objects.equals(date, other.date)
-                && Objects.equals(time, other.time);
+        return consultationID == other.consultationID;
     }
 
     // Override hashCode
     @Override
     public int hashCode() {
-        return Objects.hash(patientName, doctorName, date, time);
+        return Objects.hash(consultationID);
     }
 
     // For easy display
     @Override
     public String toString() {
-        return date + " " + time + " - " + patientName + " with Dr. " + doctorName;
+        return "[" + consultationID + "] "
+                + date + " " + time + " - "
+                + patientName + " with Dr. " + doctorName;
     }
 }

@@ -15,8 +15,8 @@ public class ConsultationSortedList implements SortedListInterface<Consultation>
     @Override
     public boolean add(Consultation newEntry) {
         if (contains(newEntry)) {
-            System.out.println("Doctor " + newEntry.getDoctorName() +
-                    " is unavailable for " + newEntry.getDate() + " " + newEntry.getTime());
+            System.out.println("Doctor " + newEntry.getDoctorName()
+                    + " is unavailable for " + newEntry.getDate() + " " + newEntry.getTime());
             return false;
         }
 
@@ -29,8 +29,8 @@ public class ConsultationSortedList implements SortedListInterface<Consultation>
         }
 
         Node<Consultation> current = head;
-        while (current.getNext() != null &&
-                newEntry.compareTo(current.getNext().getData()) > 0) {
+        while (current.getNext() != null
+                && newEntry.compareTo(current.getNext().getData()) > 0) {
             current = current.getNext();
         }
 
@@ -46,23 +46,21 @@ public class ConsultationSortedList implements SortedListInterface<Consultation>
             return false; // list empty
         }
 
-        // If the head is the one to remove
-        if (head.getData().sameSlot(targetEntry.getDate(), targetEntry.getTime())
-                && head.getData().getDoctorName().equalsIgnoreCase(targetEntry.getDoctorName())) {
+        // If head matches by ID
+        if (head.getData().getConsultationID() == targetEntry.getConsultationID()) {
             head = head.getNext();
             return true;
         }
 
         Node<Consultation> current = head;
         while (current.getNext() != null) {
-            Consultation nextData = current.getNext().getData();
-            if (nextData.sameSlot(targetEntry.getDate(), targetEntry.getTime())
-                    && nextData.getDoctorName().equalsIgnoreCase(targetEntry.getDoctorName())) {
+            if (current.getNext().getData().getConsultationID() == targetEntry.getConsultationID()) {
                 current.setNext(current.getNext().getNext());
                 return true;
             }
             current = current.getNext();
         }
+
         return false; // not found
     }
 
