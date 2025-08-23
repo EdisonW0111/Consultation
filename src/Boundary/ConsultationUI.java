@@ -1,15 +1,15 @@
 package Boundary;
 
 import java.util.Scanner;
-import ADT.SortedListInterface;
-import ADT.ConsultationSortedList;
+import ADT.ConsultationSortedLinkedList;
 import Control.ConsultationManagement;
+import ADT.SortedLinkedListInterface;
 
 public class ConsultationUI {
 
     private Scanner scanner = new Scanner(System.in);
 
-    private SortedListInterface consultationList = new ConsultationSortedList();
+    private SortedLinkedListInterface consultationList = new ConsultationSortedLinkedList();
 
     public void displayConsultationMenu() {
         System.out.println("============================================");
@@ -47,4 +47,34 @@ public class ConsultationUI {
         System.out.println("3. Exit");
 
     }
+
+    public void UpdateConsultationAppointmentMenu() {
+        System.out.println("============================================");
+        System.out.println("           Update Consultation              ");
+        System.out.println("============================================");
+        System.out.println("1. Update Consultation Date and Time");
+        System.out.println("2. Check In");
+        System.out.println("3. Complete");
+        System.out.println("4. Exit");
+
+    }
+
+    public int getConsultationIDInput() {
+        System.out.print("Enter Consultation ID : ");
+        int id = scanner.nextInt();
+
+        return id;
+    }
+
+    public String getDateInput() {
+        System.out.print("Enter date (YYYY-MM-DD): ");
+        return scanner.nextLine();
+    }
+
+    public String getTimeInput() {
+        System.out.print("Enter time (HH:MM): ");
+        return scanner.nextLine();
+    }
+
+    
 }

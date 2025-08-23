@@ -3,11 +3,11 @@ package ADT;
 import Entity.Consultation;
 import Node.Node;
 
-public class ConsultationSortedList implements SortedListInterface<Consultation> {
+public class ConsultationSortedLinkedList implements SortedLinkedListInterface<Consultation> {
 
     private Node<Consultation> head;
 
-    public ConsultationSortedList() {
+    public ConsultationSortedLinkedList() {
         head = null;
     }
 
@@ -105,16 +105,42 @@ public class ConsultationSortedList implements SortedListInterface<Consultation>
         }
         return count;
     }
-
-    public boolean updateStatus(int consultationID, Consultation.Status newStatus) {
+     
+    @Override
+    // Update status to CHECKED_IN
+    public boolean updateStatusToCheckIn(Consultation targetEntry) {
         Node<Consultation> current = head;
+
         while (current != null) {
-            if (current.getData().getConsultationID() == consultationID) {
-                current.getData().setStatus(newStatus);
+            if (current.getData().getConsultationID() == targetEntry.getConsultationID()) {
+                current.getData().setStatus(Consultation.Status.CHECKED_IN);
                 return true;
             }
             current = current.getNext();
         }
+
+        return false; // not found
+    }
+
+    @Override
+    // Update status to COMPLETED (only if current status is CHECKED_IN)
+    public boolean updateStatusToCompleted(Consultation targetEntry) {
+        Node<Consultation> current = head;
+
+        while (current != null) {
+            if (current.getData().getConsultationID() == targetEntry.getConsultationID()) {
+                if (current.getData().getStatus() == Consultation.Status.CHECKED_IN) {
+                    current.getData().setStatus(Consultation.Status.COMPLETED);
+                    return true;
+                } else {
+                    System.out.println("Cannot mark consultation as COMPLETED. Current status is "
+                            + current.getData().getStatus());
+                    return false;
+                }
+            }
+            current = current.getNext();
+        }
+
         return false; // not found
     }
 
@@ -122,32 +148,54 @@ public class ConsultationSortedList implements SortedListInterface<Consultation>
     @Override
     public void display() {
         Node<Consultation> current = head;
+        if (current == null) {
+            System.out.println("No consultations found.");
+            return;
+        }
+
+        // Print header row
+        System.out.printf("%-10s %-12s %-8s %-20s %-20s %-15s%n",
+                "ID", "Date", "Time", "Patient", "Doctor", "Status");
+        System.out.println("------------------------------------------------------------------------------------------");
+
+        // Print each consultation in a table-like format
         while (current != null) {
             Consultation c = current.getData();
-            System.out.println(c.getConsultationID() + " " + c.getDate() + " " + c.getTime()
-                    + " - " + c.getPatientName()
-                    + " with Dr. " + c.getDoctorName() + " " + c.getStatus());
+            System.out.printf("%-10d %-12s %-8s %-20s %-20s %-15s%n",
+                    c.getConsultationID(),
+                    c.getDate(),
+                    c.getTime(),
+                    c.getPatientName(),
+                    c.getDoctorName(),
+                    c.getStatus());
             current = current.getNext();
         }
     }
-    
+
     @Override
     public void listScheduledConsultations() {
         Node<Consultation> current = head;
         boolean found = false;
 
+        // Print header row
+        System.out.printf("%-10s %-12s %-8s %-20s %-20s %-15s%n",
+                "ID", "Date", "Time", "Patient", "Doctor", "Status");
+        System.out.println("------------------------------------------------------------------------------------------");
+
         while (current != null) {
             Consultation c = current.getData();
             if (c.getStatus() == Consultation.Status.SCHEDULED) {
-                System.out.println(c.getConsultationID() + " " + c.getDate() + " " + c.getTime()
-                        + " - " + c.getPatientName()
-                        + " with Dr. " + c.getDoctorName()
-                        + " [Status: " + c.getStatus() + "]");
+                System.out.printf("%-10d %-12s %-8s %-20s %-20s %-15s%n",
+                        c.getConsultationID(),
+                        c.getDate(),
+                        c.getTime(),
+                        c.getPatientName(),
+                        c.getDoctorName(),
+                        c.getStatus());
                 found = true;
             }
             current = current.getNext();
         }
-
         if (!found) {
             System.out.println("No scheduled consultations found.");
         }
