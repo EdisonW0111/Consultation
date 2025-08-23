@@ -1,13 +1,10 @@
 package Control;
 
-import ADT.ConsultationSortedLinkedList;
+import ADT.SortedLinkedList;
 import Boundary.ConsultationUI;
 import java.util.Scanner;
 import Entity.Consultation;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import utilities.Utils;
 import ADT.SortedLinkedListInterface;
 
 public class ConsultationManagement {
@@ -15,71 +12,37 @@ public class ConsultationManagement {
     ConsultationUI ui = new ConsultationUI();
     private Scanner scanner = new Scanner(System.in);
 
-    private SortedLinkedListInterface consultationList = new ConsultationSortedLinkedList();
+    // Consultation-specific list (uses sorted list for Consultation)
+    private SortedLinkedList<Consultation> consultationList = new SortedLinkedList<>();
 
     public void addConsultation() {
-        //System.out.print("Enter patient IC number: ");
-        //String IC = scanner.nextLine();
-
         System.out.print("Enter patient name: ");
         String patientName = scanner.nextLine();
 
         System.out.print("Enter doctor name: ");
         String doctorName = scanner.nextLine();
 
-        String date = getValidatedDate(ui);
-        String time = getValidatedTime(ui);
+        // Delegates to validation helpers
+        String date = Utils.getValidatedDate();
+        String time = Utils.getValidatedTime();
 
         Consultation newConsultation = new Consultation(patientName, doctorName, date, time);
-        boolean added = consultationList.add(newConsultation);
 
+        //Conflict checking before adding
+        for (Consultation c : consultationList) {
+            if (newConsultation.conflictsWith(c)) {
+                System.out.println("Cannot schedule. Conflict with: \n");
+                ui.displayConsultationHeader();
+                System.out.println(c);
+                return; // exit without adding
+            }
+        }
+
+        boolean added = consultationList.add(newConsultation);
         if (added) {
             System.out.println("Consultation appointment added successfully!");
         } else {
-            System.out.println("Failed to add consultation (Slot already taken).");
-        }
-    }
-
-    public String getValidatedDate(ConsultationUI ui) {
-        String date;
-        do {
-            date = ui.getDateInput();  // get raw input from UI
-            if (!isValidDate(date)) {
-                System.out.println("Invalid date! Please enter today or a future date in format YYYY-MM-DD.");
-            }
-        } while (!isValidDate(date));  // repeat until valid
-        return date;
-    }
-
-    public String getValidatedTime(ConsultationUI ui) {
-        String time;
-        do {
-            time = ui.getTimeInput(); // get raw input from UI
-            if (!isValidTime(time)) {
-                System.out.println("Invalid time! Please enter in HH:MM format (24-hour).");
-            }
-        } while (!isValidTime(time));
-        return time;
-    }
-
-    // Validator for date (must be today or future)
-    public boolean isValidDate(String date) {
-        try {
-            LocalDate enteredDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            LocalDate today = LocalDate.now();
-            return !enteredDate.isBefore(today); // disallow past dates
-        } catch (DateTimeParseException e) {
-            return false;
-        }
-    }
-
-    //Validator for time
-    public boolean isValidTime(String time) {
-        try {
-            LocalTime.parse(time, DateTimeFormatter.ofPattern("HH:mm"));
-            return true;
-        } catch (DateTimeParseException e) {
-            return false;
+            System.out.println("Failed to add consultation (unexpected error).");
         }
     }
 
@@ -87,7 +50,7 @@ public class ConsultationManagement {
         if (consultationList.isEmpty()) {
             System.out.println("No consultations found.");
         } else {
-            printCenteredTitle("ALL CONSULTATIONS", 85);
+            Utils.printCenteredTitle("ALL CONSULTATIONS", 85);
             consultationList.display();
         }
     }
@@ -96,33 +59,74 @@ public class ConsultationManagement {
         if (consultationList.isEmpty()) {
             System.out.println("No consultations found.");
         } else {
-            printCenteredTitle("SCHEDULED CONSULTATIONS", 85);
-            consultationList.listScheduledConsultations();
+            Utils.printCenteredTitle("SCHEDULED CONSULTATIONS", 85);
+
+            ui.displayConsultationHeader();
+            for (Consultation c : consultationList) {  // works if consultationList is Iterable
+                if (c.getStatus() == Consultation.Status.SCHEDULED) {
+                    System.out.println(c);  // or use your custom display method
+                }
+            }
+
         }
     }
 
-    public void printCenteredTitle(String title, int width) {
-        int padding = (width - title.length()) / 2;
-        String line = "=".repeat(width); // decorative line
-        System.out.println("\n" + line);
-        System.out.printf("%" + (padding + title.length()) + "s%n", title);
-        System.out.println(line);
+    public void cancelAppointment() {
+        // Step 1: Check if there are scheduled consultations
+        boolean hasScheduled = false;
+        for (Consultation c : consultationList) {
+            if (c.getStatus() == Consultation.Status.SCHEDULED) {
+                hasScheduled = true;
+                break;
+            }
+        }
+
+        if (!hasScheduled) {
+            System.out.println("No scheduled consultations available to cancel.");
+            return; // go back to main menu
+        }
+
+        // Step 2: Show all scheduled consultations
+        listAwaitingAppointment();
+
+        // Step 3: Ask for ID
+        int id = ui.getConsultationIDInput();
+        if (id == 0) { // if user typed 0 or cancelled
+            System.out.println("Cancellation aborted by user.");
+            return;
+        }
+
+        // Step 4: Try to cancel
+        boolean success = cancelSearchedAppointment(id);
+
+        // Step 5: Display result
+        if (success) {
+            System.out.println("Consultation " + id + " has been cancelled and removed.");
+        } else {
+            System.out.println("Consultation " + id + " not found or not eligible for cancellation.");
+        }
     }
 
-    public void cancelAppointment() {
-
+    // Cancel consultation by ID (remove from linked list)
+    public boolean cancelSearchedAppointment(int consultationId) {
+        for (Consultation c : consultationList) {
+            if (c.getConsultationID() == consultationId
+                    && c.getStatus() == Consultation.Status.SCHEDULED) {
+                // Call SortedLinkedList's cancel() to remove the node
+                return consultationList.cancel(c);
+            }
+        }
+        return false; // Not found
     }
 
     public void updateConsultation() {
-        ConsultationUI ui = new ConsultationUI();
         boolean exit = false;
-
         while (!exit) {
             ui.UpdateConsultationAppointmentMenu();
             int choice = ui.getChoice();
-
             switch (choice) {
                 case 1:
+
                     break;
                 case 2:
                     appointmentCheckin();
@@ -140,75 +144,85 @@ public class ConsultationManagement {
     }
 
     public boolean appointmentCheckin() {
-        ConsultationUI ui = new ConsultationUI();
-        int id = ui.getConsultationIDInput(); // assume UI has method to get ID
-
-        // Cancel if user enters 0
+        int id = ui.getConsultationIDInput();
         if (id == 0) {
-            System.out.println("❌ Update cancelled by user.");
+            System.out.println("Update cancelled by user.");
             return false;
         }
 
-        Consultation target = new Consultation("temp", "temp", "0000-00-00", "00:00");
-        // temp object only to carry ID
-        try {
-            java.lang.reflect.Field idField = Consultation.class.getDeclaredField("consultationID");
-            idField.setAccessible(true);
-            idField.set(target, id);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        boolean success = consultationList.updateStatusToCheckIn(target);
-
+        boolean success = updateStatusToCheckIn(id);
         if (success) {
             System.out.println("Consultation " + id + " status updated to CHECKED_IN.");
-
         } else {
-            System.out.println("Consultation " + id + " not found.");
+            System.out.println("Consultation " + id + " not found or not eligible.");
         }
         return success;
     }
 
     public boolean appointmentComplete() {
-        ConsultationUI ui = new ConsultationUI();
-        int id = ui.getConsultationIDInput(); // assume UI has method to get ID
-
-        Consultation target = new Consultation("temp", "temp", "0000-00-00", "00:00");
-        // temp object only to carry ID
-        try {
-            java.lang.reflect.Field idField = Consultation.class.getDeclaredField("consultationID");
-            idField.setAccessible(true);
-            idField.set(target, id);
-        } catch (Exception e) {
-            e.printStackTrace();
+        int id = ui.getConsultationIDInput();
+        if (id == 0) {
+            System.out.println("Update cancelled by user.");
+            return false;
         }
 
-        boolean success = consultationList.updateStatusToCompleted(target);
-
+        boolean success = updateStatusToCompleted(id);
         if (success) {
             System.out.println("Consultation " + id + " status updated to COMPLETED.");
         } else {
-            System.out.println("Consultation " + id + " not found or not in CHECKED_IN state.");
+            System.out.println("Consultation " + id + " not found or not eligible.");
         }
+        return success;
+    }
 
-        return true;
+// Update status to CHECKED_IN
+    public boolean updateStatusToCheckIn(int consultationID) {
+        for (Consultation c : consultationList) {   // ✅ use the list's iterator
+            if (c.getConsultationID() == consultationID) {
+                if (c.getStatus() == Consultation.Status.SCHEDULED) {
+                    c.setStatus(Consultation.Status.CHECKED_IN);
+                    return true;
+                } else {
+                    System.out.println("Consultation is not in SCHEDULED state.");
+                    return false;
+                }
+            }
+        }
+        return false; // Not found
+    }
+
+// Update status to COMPLETED
+    public boolean updateStatusToCompleted(int consultationID) {
+        for (Consultation c : consultationList) {   // ✅ use the list's iterator
+            if (c.getConsultationID() == consultationID) {
+                if (c.getStatus() == Consultation.Status.CHECKED_IN) {
+                    c.setStatus(Consultation.Status.COMPLETED);
+                    return true;
+                } else {
+                    System.out.println("Consultation is not in CHECKED_IN state.");
+                    return false;
+                }
+            }
+        }
+        return false; // Not found
     }
 
     public void searchAppointment() {
-        ConsultationUI ui = new ConsultationUI();
         boolean exit = false;
-
         ui.displaySearchConsultationMenu();
         int choice = ui.getChoice();
-
         while (!exit) {
             switch (choice) {
                 case 1:
+                    searchByDateTime();
                     break;
                 case 2:
+                    searchByPatient();
                     break;
                 case 3:
+                    searchByDoctor();
+                    break;
+                case 4:
                     exit = true;
                     break;
                 default:
@@ -217,19 +231,67 @@ public class ConsultationManagement {
         }
     }
 
-    public void generateReport() {
+    private void searchByDateTime() {
+        String date = Utils.getValidatedDateFormat();
+        String time = Utils.getValidatedTime();
 
+        boolean found = false;
+        ui.displayConsultationHeader();
+        for (Consultation c : consultationList) {
+            if (c.getDate().equals(date) && c.getTime().equals(time)) {
+                System.out.println(c);
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("No consultation found for the given date and time.");
+        }
+    }
+
+    private void searchByPatient() {
+        String patientName = ui.getPatientInput();
+
+        boolean found = false;
+        ui.displayConsultationHeader();
+        for (Consultation c : consultationList) {
+            if (c.getPatientName().equalsIgnoreCase(patientName)) {
+                System.out.println(c);
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("No consultations found for patient: " + patientName);
+        }
+    }
+
+    private void searchByDoctor() {
+        String doctorName = ui.getDoctorInput();
+
+        boolean found = false;
+        ui.displayConsultationHeader();
+        for (Consultation c : consultationList) {
+            if (c.getDoctorName().equalsIgnoreCase(doctorName)) {
+                System.out.println(c);
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("No consultations found for doctor: " + doctorName);
+        }
+    }
+
+    public void generateReport() {
+        // TODO: implement
     }
 
     public static void main(String[] args) {
         ConsultationUI ui = new ConsultationUI();
         ConsultationManagement cm = new ConsultationManagement();
-        boolean exit = false;
 
+        boolean exit = false;
         while (!exit) {
             ui.displayConsultationMenu();
             int choice = ui.getChoice();
-
             switch (choice) {
                 case 1:
                     cm.addConsultation();

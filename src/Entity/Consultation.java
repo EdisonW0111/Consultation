@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Consultation implements Comparable<Consultation> {
 
-    private static final AtomicInteger COUNTER = new AtomicInteger(1000); 
+    private static final AtomicInteger COUNTER = new AtomicInteger(1000);
     // Auto-increment ID starting from 1000
 
     private final int consultationID;
@@ -14,10 +14,10 @@ public class Consultation implements Comparable<Consultation> {
     private String date; // Format: YYYY-MM-DD
     private String time; // Format: HH:MM (24-hour)
     private Status status;
-    
+
     // Enum for consultation status
     public enum Status {
-        SCHEDULED, CHECKED_IN, COMPLETED, CANCELLED
+        SCHEDULED, CHECKED_IN, COMPLETED
     }
 
     public Consultation(String patientName, String doctorName, String date, String time) {
@@ -49,11 +49,11 @@ public class Consultation implements Comparable<Consultation> {
     public String getTime() {
         return time;
     }
-    
+
     public Status getStatus() {
         return status;
     }
-    
+
     // Update status
     public void setStatus(Status status) {
         this.status = status;
@@ -69,11 +69,39 @@ public class Consultation implements Comparable<Consultation> {
         return this.time.compareTo(other.time); // same date → compare time
     }
 
+    // Check if two consultations conflict (same doctor, same date, within 15 mins)
+    public boolean conflictsWith(Consultation other) {
+        // Only matters if same doctor & same date
+        if (!this.doctorName.equalsIgnoreCase(other.doctorName)
+                || !this.date.equals(other.date)) {
+            return false;
+        }
+
+        // Parse times into minutes since midnight
+        int thisMinutes = toMinutes(this.time);
+        int otherMinutes = toMinutes(other.time);
+
+        // If within 15 minutes either way -> conflict
+        return Math.abs(thisMinutes - otherMinutes) < 15;
+    }
+
+    // Helper method to convert HH:mm to minutes
+    private int toMinutes(String time) {
+        String[] parts = time.split(":");
+        int hour = Integer.parseInt(parts[0]);
+        int minute = Integer.parseInt(parts[1]);
+        return hour * 60 + minute;
+    }
+
     // Override equals to compare by ID
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (!(obj instanceof Consultation)) return false;
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof Consultation)) {
+            return false;
+        }
         Consultation other = (Consultation) obj;
         return consultationID == other.consultationID;
     }
@@ -83,10 +111,10 @@ public class Consultation implements Comparable<Consultation> {
     public int hashCode() {
         return Objects.hash(consultationID);
     }
-    
+
     @Override
     public String toString() {
-        return String.format("[%s] %s with Dr.%s on %s %s (%s)", 
-            consultationID, patientName, doctorName, date, time, status);
+        return String.format("%-10d %-12s %-8s %-20s %-20s %-15s",
+                consultationID, date, time, patientName, doctorName, status);
     }
 }

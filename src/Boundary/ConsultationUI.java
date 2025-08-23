@@ -1,15 +1,16 @@
 package Boundary;
 
 import java.util.Scanner;
-import ADT.ConsultationSortedLinkedList;
+import ADT.SortedLinkedList;
 import Control.ConsultationManagement;
 import ADT.SortedLinkedListInterface;
 
 public class ConsultationUI {
 
+    private static ConsultationManagement cm = new ConsultationManagement();
     private Scanner scanner = new Scanner(System.in);
 
-    private SortedLinkedListInterface consultationList = new ConsultationSortedLinkedList();
+    private SortedLinkedListInterface consultationList = new SortedLinkedList();
 
     public void displayConsultationMenu() {
         System.out.println("============================================");
@@ -44,7 +45,8 @@ public class ConsultationUI {
         System.out.println("============================================");
         System.out.println("1. Search by date and time");
         System.out.println("2. Search by IC");
-        System.out.println("3. Exit");
+        System.out.println("3. Search by Doctor");
+        System.out.println("4. Exit");
 
     }
 
@@ -66,6 +68,16 @@ public class ConsultationUI {
         return id;
     }
 
+    public String getPatientInput() {
+        System.out.print("Enter patient name: ");
+        return scanner.nextLine();
+    }
+    
+    public String getDoctorInput() {
+        System.out.print("Enter doctor name: ");
+        return scanner.nextLine();
+    }
+    
     public String getDateInput() {
         System.out.print("Enter date (YYYY-MM-DD): ");
         return scanner.nextLine();
@@ -76,5 +88,16 @@ public class ConsultationUI {
         return scanner.nextLine();
     }
 
-    
+    public int getConsultationIDInputforCancel() {
+        System.out.print("\nEnter Consultation ID (Enter 0 to cancel): ");
+        int id = scanner.nextInt();
+
+        return id;
+    }
+
+    public void displayConsultationHeader() {
+        System.out.printf("%-10s %-12s %-8s %-20s %-20s %-15s%n",
+                "ID", "Date", "Time", "Patient", "Doctor", "Status");
+        System.out.println("-------------------------------------------------------------------------------------------");
+    }
 }

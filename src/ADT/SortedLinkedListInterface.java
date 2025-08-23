@@ -61,7 +61,7 @@ public interface SortedLinkedListInterface<T extends Comparable<T>> {
      * Task: Lists all consultations that are currently in SCHEDULED status.
      * The list is displayed in sorted order.
      */
-    public void listScheduledConsultations();
+    //public void listScheduledConsultations();
 
     /**
      * Task: Updates the status of a consultation to CHECKED_IN.
@@ -69,7 +69,7 @@ public interface SortedLinkedListInterface<T extends Comparable<T>> {
      * @param targetEntry the consultation to update (identified by ID)
      * @return true if the update was successful, false if not found
      */
-    public boolean updateStatusToCheckIn(T targetEntry);
+    //public boolean updateStatusToCheckIn(T targetEntry);
     
     /**
      * Task: Updates the status of a consultation to COMPLETED,
@@ -79,5 +79,5 @@ public interface SortedLinkedListInterface<T extends Comparable<T>> {
      * @return true if the update was successful, 
      *         false if not found or not in CHECKED_IN state
      */
-    public boolean updateStatusToCompleted(T targetEntry);
+    //public boolean updateStatusToCompleted(T targetEntry);
 }
